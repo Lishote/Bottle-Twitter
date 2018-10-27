@@ -2,6 +2,9 @@ from tweepy import *
 
 import twitter_credentials
 
+import numpy as np
+import pandas as pd
+
 
 class TwitterClient:
 
@@ -9,6 +12,9 @@ class TwitterClient:
         self.auth = TwitterAuthenticator().authenticate_twitter_app()
         self.twitter_client = API(self.auth)
         self.twitter_user = twitter_user
+
+    def get_twitter_client_api(self):
+        return self.twitter_client
 
     def get_user_timeline_tweets(self, num_tweets):
         tweets = []
@@ -77,10 +83,26 @@ class TwitterListener(StreamListener):
         print(status)
 
 
+class TweetAnalyzer:
+    """
+    Functionality for analyzing and categorizing tweets
+    """
+    def tweets_to_data_frame(self, tweets):
+        df = pd.DataFrame(data=[tweet.text for tweet in tweets], columns=['Tweets'])
+
+        df['id'] = np.array([tweet.id for tweet in tweets])
+
+        return df
+
+
 if __name__ == "__main__":
 
-    hash_tag_list = ["@realpython", "python tips"]
-    fetched_tweets_filename = "tweets.json"
+    twitter_client = TwitterClient()
+    tweet_analyzer = TweetAnalyzer()
+    api = twitter_client.get_twitter_client_api()
 
-    twitter_client = TwitterClient('realpython')
-    print(twitter_client.get_user_timeline_tweets(1))
+    tweets = api.user_timeline(screen_name="realpython", count=10)
+
+    df = tweet_analyzer.tweets_to_data_frame(tweets)
+
+    print(df.head(10))
